@@ -86,7 +86,7 @@ def _collect_problem_definition() -> Tuple[
 ]:
     with st.sidebar:
         st.header("Problem Setup")
-        st.caption("All constraints are of the form ≤ with non-negative decision variables.")
+        st.caption("Supports ≤, ≥, and = constraints with non-negative decision variables.")
 
         num_vars = st.number_input("Number of decision variables", 2, 6, 2)
         num_constraints = st.number_input("Number of constraints", 1, 6, 2)
@@ -105,7 +105,7 @@ def _collect_problem_definition() -> Tuple[
         st.markdown("### Constraints")
         constraints: List[Dict[str, Sequence[float]]] = []
         for constraint_idx in range(num_constraints):
-            cols = st.columns([3] * num_vars + [2])
+            cols = st.columns([3] * num_vars + [2] + [1])
             coeffs: List[float] = []
             for var_idx in range(num_vars):
                 coeffs.append(
@@ -118,6 +118,13 @@ def _collect_problem_definition() -> Tuple[
                         )
                     )
                 )
+            sense = cols[-2].selectbox(
+                f"sense{constraint_idx + 1}",
+                options=["<=", ">=", "="],
+                index=0,
+                key=f"sense_{constraint_idx}",
+                label_visibility="collapsed",
+            )
             rhs = float(
                 cols[-1].number_input(
                     f"b{constraint_idx + 1}",
@@ -126,7 +133,7 @@ def _collect_problem_definition() -> Tuple[
                     key=f"rhs_{constraint_idx}",
                 )
             )
-            constraints.append({"coefficients": coeffs, "rhs": rhs})
+            constraints.append({"coefficients": coeffs, "sense": sense, "rhs": rhs})
 
         st.markdown("---")
         run_requested = st.button("🚀 Run Simplex", type="primary")
@@ -139,7 +146,11 @@ def _run_simplex(
     constraints_data: Sequence[Dict[str, Sequence[float]]],
 ) -> SimplexResultPayload:
     constraints = [
-        Constraint(coefficients=item["coefficients"], rhs=item["rhs"])
+        Constraint(
+            coefficients=item["coefficients"],
+            rhs=item["rhs"],
+            sense=item.get("sense", "<="),
+        )
         for item in constraints_data
     ]
     lp = LinearProgram(objective=objective, constraints=constraints)
@@ -237,23 +248,45 @@ def _render_stepper(
     )
     step = steps[slider]
 
+    # Extract all variable names from all steps and sort them
+    all_var_names = set()
+    for s in steps:
+        all_var_names.update(s.basis)
+
+    # Sort variables: x1, x2, ... then s1, s2, ... then e1, e2, ... then a1, a2, ...
+    def var_sort_key(name: str) -> tuple:
+        if name.startswith('x'):
+            return (0, int(name[1:]))
+        elif name.startswith('s'):
+            return (1, int(name[1:]))
+        elif name.startswith('e'):
+            return (2, int(name[1:]))
+        elif name.startswith('a'):
+            return (3, int(name[1:]))
+        else:
+            return (4, 0)
+
+    sorted_vars = sorted(all_var_names, key=var_sort_key)
     total_vars = len(step.tableau[0]) - 1
-    slack_vars = max(total_vars - num_vars, 0)
-    columns = (
-        [f"x{i + 1}" for i in range(num_vars)]
-        + [f"s{i + 1}" for i in range(slack_vars)]
-        + ["RHS"]
-    )
-    row_labels = [f"Constraint {i + 1}" for i in range(len(step.tableau) - 1)] + [
-        "Objective"
-    ]
-    df = pd.DataFrame(step.tableau, columns=columns, index=row_labels)
+
+    # Use sorted variable names if count matches, otherwise fall back to generic labels
+    if len(sorted_vars) == total_vars:
+        columns = sorted_vars + ["RHS"]
+    else:
+        columns = [f"v{i + 1}" for i in range(total_vars)] + ["RHS"]
+
+    # Reorder tableau: put objective row first, then constraint rows
+    reordered_tableau = [step.tableau[-1]] + step.tableau[:-1]
+    row_labels = ["Objective"] + [f"Constraint {i + 1}" for i in range(len(step.tableau) - 1)]
+    df = pd.DataFrame(reordered_tableau, columns=columns, index=row_labels)
 
     def highlight(_: pd.DataFrame) -> pd.DataFrame:
         styles = pd.DataFrame("", index=df.index, columns=df.columns)
         if step.pivot:
             p_row, p_col = step.pivot
-            styles.iat[p_row, p_col] = "background-color:#f97316;color:#020617;font-weight:600;"
+            # Adjust row index: pivot is in original tableau coordinates, need to shift for display
+            display_row = p_row + 1  # +1 because objective row is now at index 0
+            styles.iat[display_row, p_col] = "background-color:#f97316;color:#020617;font-weight:600;"
         return styles
 
     st.dataframe(df.style.format("{:.3f}").apply(highlight, axis=None))
