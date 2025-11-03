@@ -39,8 +39,8 @@ with st.expander("ℹ️ How to use this form", expanded=False):
        - Right-hand side value
 
     ### Important Notes
-    - Current version supports **maximization** problems only
-    - Constraints must be in **≤** form
+    - Supports both **maximization** and **minimization** problems
+    - Supports **≤, ≥, and =** constraints
     - All RHS values must be **non-negative**
 
     ### Example
@@ -66,8 +66,6 @@ with col1:
         help="Choose whether to maximize or minimize the objective function",
         key="objective_sense_select",
     )
-    if objective_sense == "min":
-        st.warning("⚠️ Note: Current version only supports maximization. Please convert your minimization problem.")
 
 with col2:
     num_variables = st.number_input(
@@ -149,9 +147,6 @@ for c in range(num_constraints):
             key=f"constraint_{c}_sense",
             help="Constraint type",
         )
-        if sense != "<=":
-            st.warning("⚠️ Only ≤ supported")
-            valid_constraints = False
 
     # RHS value
     with cols[num_variables + 1]:
@@ -193,9 +188,7 @@ with col1:
     if st.button("✅ Create Problem", type="primary", use_container_width=True):
         try:
             # Validate inputs
-            if objective_sense != "max":
-                st.error("❌ Only maximization problems are currently supported")
-            elif not valid_constraints:
+            if not valid_constraints:
                 st.error("❌ Please fix constraint validation errors above")
             elif sum(objective_coeffs) == 0:
                 st.error("❌ Objective function cannot have all zero coefficients")
