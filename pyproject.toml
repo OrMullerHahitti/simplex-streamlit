@@ -1,0 +1,18 @@
+[project]
+name = "vibe-simplex"
+version = "0.1.0"
+description = "Interactive simplex solver with debugging, sensitivity analysis, and a rich UI"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=2.3.4",
+    "pandas>=2.3.3",
+    "plotly>=6.3.1",
+    "streamlit>=1.51.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+]
