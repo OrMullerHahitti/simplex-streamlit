@@ -26,6 +26,20 @@ st.title("🚀 Simplex Solver")
 st.markdown("Run the simplex algorithm and view comprehensive results")
 st.markdown("---")
 
+st.markdown(
+    """
+    <div class='custom-card' style='text-align:center;'>
+        <div style='font-size:1.25rem;font-weight:600;'>Instead of Solve, try to run step by step.</div>
+        <div style='font-size:0.95rem;color:var(--text-secondary);margin-top:0.35rem;'>
+            Keep "Enable Step Recording" switched on to replay each pivot in the Debugger after you load a problem.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown("---")
+
 # Check if problem exists
 if st.session_state.current_problem is None:
     st.warning("⚠️ No problem defined. Please go to **Problem Input** to create a problem first.")

@@ -145,7 +145,7 @@ for problem in filtered:
                 for note in problem.insights:
                     st.markdown(f"- {note}")
         with insight_col2:
-            if st.button(f"Load {problem.name}", key=f"load_{problem.slug}"):
+            if st.button("📥 Load Example", key=f"load_{problem.slug}", use_container_width=True):
                 try:
                     lp = problem.to_linear_program()
                     st.session_state.current_problem = lp
@@ -154,7 +154,12 @@ for problem in filtered:
                     st.session_state.num_variables = lp.num_variables
                     st.session_state.num_constraints = lp.num_constraints
                     st.session_state.objective_sense = lp.sense
-                    st.success("Problem loaded. Jump to the Solver when ready!")
+                    st.session_state.last_loaded_example = problem.slug
+                    st.toast("Example ready—sending you to the Solver.")
+                    try:
+                        st.switch_page("pages/2_Solver.py")
+                    except Exception:  # pragma: no cover
+                        st.info("Example loaded. Open the Solver page to start solving it.")
                 except Exception as exc:  # pragma: no cover
                     st.error(f"Unable to load problem: {exc}")
 

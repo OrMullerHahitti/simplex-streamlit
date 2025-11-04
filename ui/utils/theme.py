@@ -26,19 +26,19 @@ def get_theme_colors(theme: str = "dark") -> dict:
         }
     else:  # light theme
         return {
-            "primary": "#0070F3",
-            "secondary": "#F81CE5",
-            "accent": "#7928CA",
-            "success": "#0070F3",
-            "warning": "#F5A623",
-            "error": "#E00",
-            "background": "#FFFFFF",
-            "background-secondary": "#F7FAFC",
-            "background-tertiary": "#EDF2F7",
-            "text-primary": "#1A202C",
-            "text-secondary": "#718096",
-            "border": "#E2E8F0",
-            "shadow": "rgba(0, 0, 0, 0.1)",
+            "primary": "#2563EB",
+            "secondary": "#D946EF",
+            "accent": "#0EA5E9",
+            "success": "#10B981",
+            "warning": "#FBBF24",
+            "error": "#EF4444",
+            "background": "#FDFDFE",
+            "background-secondary": "#F5F7FB",
+            "background-tertiary": "#E7ECF4",
+            "text-primary": "#0F172A",
+            "text-secondary": "#475569",
+            "border": "#CBD5F5",
+            "shadow": "rgba(15, 23, 42, 0.08)",
         }
 
 
