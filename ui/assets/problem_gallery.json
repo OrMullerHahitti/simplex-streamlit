@@ -1,0 +1,148 @@
+[
+  {
+    "slug": "simple-2d-problem",
+    "name": "Simple 2D Problem",
+    "description": "Baseline 2-variable model that pairs perfectly with the 2D visualizer.",
+    "category": "Starter",
+    "difficulty": "Beginner",
+    "tags": ["visualization", "2-variables", "basics"],
+    "sense": "max",
+    "objective": [3.0, 5.0],
+    "constraints": [
+      {"coefficients": [2.0, 3.0], "rhs": 8.0, "sense": "<="},
+      {"coefficients": [1.0, 1.0], "rhs": 4.0, "sense": "<="}
+    ],
+    "context": "Maximize the profit of two complementary products subject to two shared resources.",
+    "expected_solution": "Optimal Z = 13.33 at (x₁, x₂) = (0, 2.67)",
+    "insights": ["Ideal onboarding problem", "Produces a single binding constraint"]
+  },
+  {
+    "slug": "production-planning",
+    "name": "Production Planning",
+    "description": "Factory-style planning with labor, machine and demand constraints.",
+    "category": "Operations",
+    "difficulty": "Intermediate",
+    "tags": ["production", "capacity", "integer-friendly"],
+    "sense": "max",
+    "objective": [40.0, 30.0],
+    "constraints": [
+      {"coefficients": [1.0, 1.0], "rhs": 12.0, "sense": "<="},
+      {"coefficients": [2.0, 1.0], "rhs": 16.0, "sense": "<="},
+      {"coefficients": [1.0, 0.0], "rhs": 8.0, "sense": "<="}
+    ],
+    "context": "Two products compete for labor and machine time; product A also has a demand cap.",
+    "expected_solution": "Optimal Z = 400 at (x₁, x₂) = (8, 0)",
+    "insights": ["Great for sensitivity walkthroughs", "Demonstrates multiple tight constraints"]
+  },
+  {
+    "slug": "resource-allocation",
+    "name": "Resource Allocation",
+    "description": "Allocate scarce resources between two activities with a balance constraint.",
+    "category": "Operations",
+    "difficulty": "Intermediate",
+    "tags": ["allocation", "trade-offs", "shadow-prices"],
+    "sense": "max",
+    "objective": [5.0, 4.0],
+    "constraints": [
+      {"coefficients": [6.0, 4.0], "rhs": 24.0, "sense": "<="},
+      {"coefficients": [1.0, 2.0], "rhs": 6.0, "sense": "<="},
+      {"coefficients": [-1.0, 1.0], "rhs": 1.0, "sense": "<="}
+    ],
+    "context": "Balance profitability with fairness by enforcing an offset between variables.",
+    "expected_solution": "Optimal Z = 21 at (x₁, x₂) = (3, 1.5)",
+    "insights": ["Includes a negative coefficient", "Helpful for dual explanations"]
+  },
+  {
+    "slug": "diet-problem",
+    "name": "Diet Problem",
+    "description": "Nutrition-inspired variant framed as a maximization challenge.",
+    "category": "Classic",
+    "difficulty": "Beginner",
+    "tags": ["diet", "constraints", "teaching"],
+    "sense": "max",
+    "objective": [0.6, 1.0],
+    "constraints": [
+      {"coefficients": [2.0, 1.0], "rhs": 4.0, "sense": "<="},
+      {"coefficients": [1.0, 3.0], "rhs": 6.0, "sense": "<="}
+    ],
+    "context": "Select food items to hit nutrition targets while staying within budget.",
+    "expected_solution": "Optimal Z = 2.40 at (x₁, x₂) = (0, 2)",
+    "insights": ["Works well for classroom demos", "Simple dual variable story"]
+  },
+  {
+    "slug": "tight-constraints",
+    "name": "Tight Constraints",
+    "description": "Shows how multiple constraints can bind simultaneously at optimum.",
+    "category": "Educational",
+    "difficulty": "Beginner",
+    "tags": ["binding", "slack", "metrics"],
+    "sense": "max",
+    "objective": [1.0, 1.0],
+    "constraints": [
+      {"coefficients": [1.0, 0.0], "rhs": 4.0, "sense": "<="},
+      {"coefficients": [0.0, 1.0], "rhs": 6.0, "sense": "<="},
+      {"coefficients": [1.0, 1.0], "rhs": 8.0, "sense": "<="}
+    ],
+    "context": "Uniform objective makes it easy to inspect complementary slackness.",
+    "expected_solution": "Optimal Z = 8 at (x₁, x₂) = (4, 4)",
+    "insights": ["Highlights shadow prices", "Great for debugger replays"]
+  },
+  {
+    "slug": "corner-point",
+    "name": "Corner Point Example",
+    "description": "Demonstrates how the optimal point sits at a polygon vertex.",
+    "category": "Educational",
+    "difficulty": "Beginner",
+    "tags": ["corner", "iso-profit", "geometry"],
+    "sense": "max",
+    "objective": [2.0, 3.0],
+    "constraints": [
+      {"coefficients": [1.0, 2.0], "rhs": 10.0, "sense": "<="},
+      {"coefficients": [2.0, 1.0], "rhs": 10.0, "sense": "<="}
+    ],
+    "context": "Visualize iso-profit lines gliding across the feasible polygon.",
+    "expected_solution": "Optimal Z = 16.67 at (x₁, x₂) = (1.67, 5)",
+    "insights": ["Pairs well with the 2D visualizer", "Only two constraints to parse"]
+  },
+  {
+    "slug": "phase-one-feasibility",
+    "name": "Phase-One Feasibility Kickoff",
+    "description": "Equality and ≥ constraints that force a two-phase start.",
+    "category": "Advanced",
+    "difficulty": "Advanced",
+    "tags": ["phase-one", "feasibility", "teaching"],
+    "sense": "max",
+    "objective": [3.0, 1.0],
+    "constraints": [
+      {"coefficients": [1.0, 1.0], "rhs": 4.0, "sense": "="},
+      {"coefficients": [1.0, -1.0], "rhs": 2.0, "sense": ">="}
+    ],
+    "context": "Use this model to discuss why Phase I introduces artificials: the equality and ≥ constraint break the default identity basis, so the solver builds feasibility before optimizing.",
+    "expected_solution": "Optimal Z = 12 at (x₁, x₂) = (4, 0)",
+    "insights": [
+      "Perfect for walking through Phase I tableau construction",
+      "Highlights how ≥ constraints convert to surplus + artificial variables"
+    ]
+  },
+  {
+    "slug": "duality-bridge",
+    "name": "Duality Bridge Problem",
+    "description": "Compact primal whose shadow prices map cleanly to the dual solution.",
+    "category": "Advanced",
+    "difficulty": "Advanced",
+    "tags": ["duality", "shadow-prices", "sensitivity"],
+    "sense": "max",
+    "objective": [5.0, 4.0],
+    "constraints": [
+      {"coefficients": [6.0, 4.0], "rhs": 24.0, "sense": "<="},
+      {"coefficients": [1.0, 2.0], "rhs": 6.0, "sense": "<="},
+      {"coefficients": [1.0, 1.0], "rhs": 5.0, "sense": "<="}
+    ],
+    "context": "Pairs naturally with a dual-derivation exercise: every constraint becomes a dual variable and the RHS/S shadow prices align perfectly for classroom walkthroughs.",
+    "expected_solution": "Optimal Z = 21 at (x₁, x₂) = (3, 1.5)",
+    "insights": [
+      "Shadow prices equal the dual variable values shown on the Analysis page",
+      "Great springboard for explaining strong duality and complementary slackness"
+    ]
+  }
+]

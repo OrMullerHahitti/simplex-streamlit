@@ -1,303 +1,216 @@
 """
-Examples Page - Pre-built LP Problems Library
+Examples Page - Education-focused LP gallery.
 """
 
 import streamlit as st
 import sys
+from collections import Counter
 from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from vibe_simplex.models import LinearProgram, Constraint
 from utils.theme import apply_custom_theme
 from utils.state import initialize_session_state
+from utils.gallery import load_problem_gallery, ExampleProblem
 
 # Page config
 st.set_page_config(page_title="Examples", page_icon="📚", layout="wide")
 
-# Initialize
+# Initialize UI baseline
 initialize_session_state()
 apply_custom_theme()
 
-# Header
-st.title("📚 Example Problems Library")
-st.markdown("Pre-built linear programming problems to explore and learn")
-st.markdown("---")
+# Header copy
+st.title("📚 Learning Library")
+st.caption("Hand-picked exercises for teaching, self-study, and live demos.")
+st.divider()
 
-# Example problems database
-EXAMPLES = {
-    "Simple 2D Problem": {
-        "description": "A basic 2-variable problem perfect for visualization",
-        "category": "Basic",
-        "objective": [3.0, 5.0],
-        "constraints": [
-            Constraint([2.0, 3.0], 8.0, "<="),
-            Constraint([1.0, 1.0], 4.0, "<="),
-        ],
-        "sense": "max",
-        "context": """
-        **Problem Context:**
-        A company produces two products (x₁ and x₂) with the following characteristics:
-        - Product 1 contributes $3 profit per unit
-        - Product 2 contributes $5 profit per unit
+# Load gallery entries
+try:
+    problems = load_problem_gallery()
+except FileNotFoundError as exc:
+    st.error(f"Cannot load gallery data: {exc}")
+    st.stop()
 
-        **Constraints:**
-        - Resource 1: 2x₁ + 3x₂ ≤ 8 (limited resource availability)
-        - Resource 2: x₁ + x₂ ≤ 4 (production capacity)
+# Quick stats for orientation
+total = len(problems)
+category_counts = Counter(p.category for p in problems)
+beginner_ready = sum(1 for p in problems if p.difficulty.lower() == "beginner")
+two_var_ready = sum(1 for p in problems if len(p.objective) == 2)
 
-        **Goal:** Maximize total profit
-        """,
-        "expected_solution": "Optimal: Z = 13.33, x₁ = 0, x₂ = 2.67",
-    },
-    "Production Planning": {
-        "description": "Classic production planning with multiple constraints",
-        "category": "Classic",
-        "objective": [40.0, 30.0],
-        "constraints": [
-            Constraint([1.0, 1.0], 12.0, "<="),  # Labor hours
-            Constraint([2.0, 1.0], 16.0, "<="),  # Machine hours
-            Constraint([1.0, 0.0], 8.0, "<="),   # Product 1 limit
-        ],
-        "sense": "max",
-        "context": """
-        **Problem Context:**
-        A factory produces two types of products with different profit margins:
-        - Product A: $40 profit per unit
-        - Product B: $30 profit per unit
+metric_cols = st.columns(4)
+metric_cols[0].metric("Examples", total)
+metric_cols[1].metric("Categories", len(category_counts))
+metric_cols[2].metric("Beginner Ready", beginner_ready)
+metric_cols[3].metric("2D Visual-Ready", two_var_ready)
 
-        **Constraints:**
-        - Labor hours: 1 hour for A, 1 hour for B, max 12 hours available
-        - Machine hours: 2 hours for A, 1 hour for B, max 16 hours available
-        - Product A has a maximum demand of 8 units
+st.divider()
 
-        **Goal:** Maximize profit from production
-        """,
-        "expected_solution": "Optimal: Z = 400, x₁ = 8, x₂ = 0",
-    },
-    "Resource Allocation": {
-        "description": "Allocate limited resources optimally",
-        "category": "Classic",
-        "objective": [5.0, 4.0],
-        "constraints": [
-            Constraint([6.0, 4.0], 24.0, "<="),
-            Constraint([1.0, 2.0], 6.0, "<="),
-            Constraint([-1.0, 1.0], 1.0, "<="),
-        ],
-        "sense": "max",
-        "context": """
-        **Problem Context:**
-        Optimize resource allocation between two activities:
-        - Activity 1: Returns 5 units of value
-        - Activity 2: Returns 4 units of value
+st.subheader("🎯 Find the right exercise")
+st.markdown("Mix search, filters, and quick toggles to narrow the library.")
 
-        **Constraints:**
-        - Resource A: 6x₁ + 4x₂ ≤ 24
-        - Resource B: x₁ + 2x₂ ≤ 6
-        - Balance constraint: -x₁ + x₂ ≤ 1
+categories = sorted(category_counts.keys())
+all_tags = sorted({tag for problem in problems for tag in problem.tags})
+all_difficulties = sorted({p.difficulty for p in problems})
 
-        **Goal:** Maximize total value
-        """,
-        "expected_solution": "Optimal: Z = 21, x₁ = 3, x₂ = 1.5",
-    },
-    "Diet Problem": {
-        "description": "Minimize cost while meeting nutritional requirements",
-        "category": "Classic",
-        "objective": [0.6, 1.0],
-        "constraints": [
-            Constraint([2.0, 1.0], 4.0, "<="),
-            Constraint([1.0, 3.0], 6.0, "<="),
-        ],
-        "sense": "max",
-        "context": """
-        **Problem Context:**
-        Select food items to maximize nutrition within budget:
-        - Food A: 0.6 nutrition units per dollar
-        - Food B: 1.0 nutrition units per dollar
+filter_row1 = st.columns([2, 1])
+with filter_row1[0]:
+    search_term = st.text_input(
+        "Search by title, description, or context",
+        placeholder="e.g. visualization, slack, production planning",
+    ).strip().lower()
+with filter_row1[1]:
+    tag_filter = st.multiselect("Focus tags", options=all_tags)
 
-        **Constraints:**
-        - Constraint 1: 2x₁ + x₂ ≤ 4
-        - Constraint 2: x₁ + 3x₂ ≤ 6
+filter_row2 = st.columns(3)
+with filter_row2[0]:
+    category_filter = st.multiselect("Categories", categories, default=categories)
+with filter_row2[1]:
+    difficulty_filter = st.multiselect(
+        "Difficulty",
+        options=all_difficulties,
+        default=all_difficulties,
+    )
+with filter_row2[2]:
+    two_var_only = st.toggle("Show only 2-variable problems", value=False, key="two_var_only")
 
-        **Goal:** Maximize nutrition (simplified from minimization)
+beginner_only = st.toggle("Highlight beginner-friendly only", value=False, key="beginner_only")
 
-        *Note: This is a maximization version of the classic diet problem*
-        """,
-        "expected_solution": "Optimal: Z = 2.4, x₁ = 0, x₂ = 2",
-    },
-    "Tight Constraints": {
-        "description": "Problem with multiple binding constraints",
-        "category": "Educational",
-        "objective": [1.0, 1.0],
-        "constraints": [
-            Constraint([1.0, 0.0], 4.0, "<="),
-            Constraint([0.0, 1.0], 6.0, "<="),
-            Constraint([1.0, 1.0], 8.0, "<="),
-        ],
-        "sense": "max",
-        "context": """
-        **Problem Context:**
-        Educational example showing constraint interactions:
-        - Equal contribution from both variables to objective
 
-        **Constraints:**
-        - x₁ ≤ 4
-        - x₂ ≤ 6
-        - x₁ + x₂ ≤ 8
+def matches(problem: ExampleProblem) -> bool:
+    """Apply search and filter logic."""
 
-        **Learning Goal:**
-        - Observe which constraints are binding at optimum
-        - Understand shadow prices for different constraints
-        """,
-        "expected_solution": "Optimal: Z = 8, x₁ = 4, x₂ = 4",
-    },
-    "Corner Point Example": {
-        "description": "Solution at a specific corner of feasible region",
-        "category": "Educational",
-        "objective": [2.0, 3.0],
-        "constraints": [
-            Constraint([1.0, 2.0], 10.0, "<="),
-            Constraint([2.0, 1.0], 10.0, "<="),
-        ],
-        "sense": "max",
-        "context": """
-        **Problem Context:**
-        Simple problem to illustrate corner point solutions:
-        - Objective: Maximize 2x₁ + 3x₂
+    if search_term:
+        haystack = f"{problem.name} {problem.description} {problem.context}".lower()
+        if search_term not in haystack:
+            return False
 
-        **Constraints:**
-        - x₁ + 2x₂ ≤ 10
-        - 2x₁ + x₂ ≤ 10
+    if category_filter and problem.category not in category_filter:
+        return False
 
-        **Learning Goal:**
-        - Visualize how the optimal solution occurs at a corner point
-        - See the iso-profit line tangent to the feasible region
-        """,
-        "expected_solution": "Optimal: Z = 16.67, x₁ = 1.67, x₂ = 5",
-    },
-}
+    if difficulty_filter and problem.difficulty not in difficulty_filter:
+        return False
 
-# Category filter
-st.markdown("### Browse Examples")
+    if tag_filter and not set(tag_filter).issubset(problem.tags):
+        return False
 
-categories = sorted(set(ex["category"] for ex in EXAMPLES.values()))
-selected_category = st.selectbox(
-    "Filter by Category",
-    options=["All"] + categories,
-    index=0,
-)
+    if two_var_only and len(problem.objective) != 2:
+        return False
 
-# Display examples
-filtered_examples = {
-    name: details
-    for name, details in EXAMPLES.items()
-    if selected_category == "All" or details["category"] == selected_category
-}
+    if beginner_only and problem.difficulty.lower() != "beginner":
+        return False
 
-st.markdown(f"**Showing {len(filtered_examples)} example(s)**")
-st.markdown("---")
+    return True
 
-# Display each example
-for example_name, details in filtered_examples.items():
+
+filtered = [p for p in problems if matches(p)]
+
+if not filtered:
+    st.info("No examples match those filters yet. Widen your search or clear a toggle.")
+else:
+    st.markdown(f"**Showing {len(filtered)} example(s).**")
+
+st.divider()
+
+
+def render_tag_badge(tag: str) -> str:
+    return (
+        "<span style='background:var(--background-tertiary);padding:0.25rem 0.65rem;"
+        "border-radius:999px;font-size:0.8rem;margin-right:0.3rem;'>"
+        f"{tag}</span>"
+    )
+
+
+for problem in filtered:
     with st.container():
-        # Header
-        col1, col2 = st.columns([3, 1])
+        header_cols = st.columns([3, 1])
 
-        with col1:
-            st.markdown(f"### {example_name}")
-            st.markdown(f"*{details['description']}*")
+        with header_cols[0]:
+            st.markdown(f"### {problem.name}")
+            st.markdown(problem.description)
+            tags_html = "".join(render_tag_badge(tag) for tag in problem.tags)
+            if tags_html:
+                st.markdown(tags_html, unsafe_allow_html=True)
 
-        with col2:
-            st.markdown(f"**Category:** {details['category']}")
+        with header_cols[1]:
+            st.markdown(f"**Category:** {problem.category}")
+            st.markdown(f"**Difficulty:** {problem.difficulty}")
+            st.markdown(f"**Variables:** {len(problem.objective)}")
 
-        # Expandable details
-        with st.expander("📖 View Details", expanded=False):
-            # Context
-            st.markdown(details["context"])
+        insight_col1, insight_col2 = st.columns([3, 1])
+        with insight_col1:
+            if problem.insights:
+                st.markdown("**Why use this example?**")
+                for note in problem.insights:
+                    st.markdown(f"- {note}")
+        with insight_col2:
+            if st.button(f"Load {problem.name}", key=f"load_{problem.slug}"):
+                try:
+                    lp = problem.to_linear_program()
+                    st.session_state.current_problem = lp
+                    st.session_state.current_result = None
+                    st.session_state.debugger = None
+                    st.session_state.num_variables = lp.num_variables
+                    st.session_state.num_constraints = lp.num_constraints
+                    st.session_state.objective_sense = lp.sense
+                    st.success("Problem loaded. Jump to the Solver when ready!")
+                except Exception as exc:  # pragma: no cover
+                    st.error(f"Unable to load problem: {exc}")
 
-            # Mathematical formulation
+        with st.expander("Full context & formulation", expanded=False):
+            st.markdown(problem.context)
             st.markdown("#### Mathematical Formulation")
-
-            obj_text = f"{details['sense'].capitalize()}imize: Z = " + " + ".join(
-                [f"{details['objective'][i]:.1f}x{i+1}" for i in range(len(details['objective']))]
+            obj_text = " + ".join(
+                f"{problem.objective[i]:.2f}x{i+1}" for i in range(len(problem.objective))
             )
-            st.code(obj_text, language="text")
+            st.code(f"{problem.sense.capitalize()}imize: Z = {obj_text}")
 
             st.markdown("**Subject to:**")
-            for idx, constraint in enumerate(details["constraints"]):
-                constraint_text = " + ".join(
-                    [f"{constraint.coefficients[i]:.1f}x{i+1}" for i in range(len(constraint.coefficients))]
+            for constraint in problem.constraints:
+                coeffs = " + ".join(
+                    f"{constraint.coefficients[i]:.2f}x{i+1}"
+                    for i in range(len(constraint.coefficients))
                 )
-                st.code(f"{constraint_text} {constraint.sense} {constraint.rhs:.1f}", language="text")
+                st.code(f"{coeffs} {constraint.sense} {constraint.rhs:.2f}")
 
-            st.code("x₁, x₂ ≥ 0 (non-negativity)", language="text")
-
-            # Expected solution
+            st.code("xᵢ ≥ 0 (non-negativity)")
             st.markdown("#### Expected Solution")
-            st.info(f"📊 {details['expected_solution']}")
+            st.info(problem.expected_solution)
 
-        # Load button
-        if st.button(f"📥 Load '{example_name}'", key=f"load_{example_name}", use_container_width=False):
-            try:
-                # Create LinearProgram
-                lp = LinearProgram(
-                    objective=details["objective"],
-                    constraints=details["constraints"],
-                    sense=details["sense"],
-                )
+        st.divider()
 
-                # Save to session state
-                st.session_state.current_problem = lp
-                st.session_state.current_result = None
-                st.session_state.debugger = None
+# Contribute instructions
+st.subheader("📬 Add your own teaching example")
+st.markdown(
+    """
+    - **Open an issue** describing the learning goal and formulation, or
+    - **Edit `ui/assets/problem_gallery.json`** directly in GitHub and append an entry using this template:
+    """
+)
 
-                # Update form state
-                st.session_state.num_variables = len(details["objective"])
-                st.session_state.num_constraints = len(details["constraints"])
-                st.session_state.objective_sense = details["sense"]
+st.code(
+    """{
+  "slug": "unique-id",
+  "name": "Problem title",
+  "description": "One-liner",
+  "category": "Starter | Operations | Classic | Educational",
+  "difficulty": "Beginner | Intermediate | Advanced",
+  "tags": ["visualization", "shadow-prices"],
+  "sense": "max|min",
+  "objective": [3.0, 5.0],
+  "constraints": [{"coefficients": [2.0, 3.0], "rhs": 8.0, "sense": "<="}],
+  "context": "Markdown-friendly narrative",
+  "expected_solution": "Optimal Z = …",
+  "insights": ["Key teaching note"]
+}
+""",
+    language="json",
+)
 
-                st.success(f"✅ Loaded '{example_name}' successfully!")
-                st.balloons()
-
-                st.info("💡 Navigate to **Solver** page to run this problem, or **Problem Input** to modify it.")
-
-            except Exception as e:
-                st.error(f"❌ Error loading example: {str(e)}")
-
-        st.markdown("---")
-
-# Current problem status
-if st.session_state.current_problem is not None:
-    st.markdown("### Currently Loaded Problem")
-
-    lp = st.session_state.current_problem
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric("Variables", lp.num_variables)
-
-    with col2:
-        st.metric("Constraints", lp.num_constraints)
-
-    with col3:
-        st.metric("Objective", lp.sense.upper())
-
-    st.success("✅ A problem is currently loaded and ready to solve!")
-
-# Footer with tips
-st.markdown("---")
-st.markdown("""
-### 💡 Tips for Learning
-
-- **Start with Simple 2D Problem** to see visualization
-- **Try Production Planning** for a classic application
-- **Explore Tight Constraints** to understand shadow prices
-- **Compare different examples** to see how constraints affect solutions
-
-After loading an example:
-1. Go to **Solver** to find the solution
-2. Check **Analysis** for sensitivity and dual information
-3. Use **Debugger** to see step-by-step iterations
-4. View **Visualization** for 2D problems
-""")
+st.markdown(
+    """
+    Once merged, the new example will appear here automatically and becomes available to the Solver,
+    Debugger, and Analysis pages—no extra wiring required.
+    """
+)
